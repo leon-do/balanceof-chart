@@ -1,70 +1,97 @@
+import { Data } from "@/types";
 import React, { useEffect, useState } from "react";
-import { BarChart, Bar, Rectangle, YAxis, Tooltip, Legend } from "recharts";
+import {
+  BarChart,
+  Bar,
+  Rectangle,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+} from "recharts";
+import { createPublicClient, http } from "viem";
 
 export default function PEPU() {
   // https://recharts.org/en-US/examples/SimpleBarChart
-  const [data, setData] = useState([]);
+  const [data, setData] = useState([] as Data[]);
 
-  const dataaa = [
-    {
-      name: "Page A",
-      date: 2400,
-      amount: 2400,
-    },
-    {
-      name: "Page B",
-      date: 1398,
-      amount: 2210,
-    },
-    {
-      name: "Page C",
-      date: 9800,
-      amount: 2290,
-    },
-    {
-      name: "Page D",
-      date: 3908,
-      amount: 2000,
-    },
-    {
-      name: "Page E",
-      date: 4800,
-      amount: 2181,
-    },
-    {
-      name: "Page F",
-      date: 3800,
-      amount: 2500,
-    },
-    {
-      name: "Page G",
-      date: 4300,
-      amount: 2100,
-    },
-  ];
+  const client = createPublicClient({
+    transport: http("https://rpc-pepe-unchained-gupg0lo9wf.t.conduit.xyz"),
+  });
+
+  useEffect(() => {
+    getData();
+  }, []);
+
+  const getData = async () => {
+    // get price of PEPE
+    const res = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=pepe-unchained&vs_currencies=usd"
+    ).then((res) => res.json());
+    const price = res["pepe-unchained"].usd;
+
+    // get latest block
+    const blockNumber = Number(await client.getBlockNumber());
+
+    // calculate blocks per day (2 seconds per block)
+    const blocksPerDay = 43_200;
+
+    // get balances for the last x days
+    const blocks = Array.from(
+      { length: 10 }, // number of days
+      (_, i) => blockNumber - i * blocksPerDay
+    );
+
+    // https://viem.sh/docs/clients/transports/http.html
+    const balances = await Promise.all(
+      blocks.map(async (block) => {
+        const balance = await client.getBalance({
+          address: process.env.NEXT_PUBLIC_EOA_ADDRESS as `0x${string}`,
+          blockNumber: block
+        });
+        return balance;
+      })
+    );
+
+    // format data
+    const formattedData = balances
+      .map((balance, i) => {
+        return {
+          name: new Date(
+            Date.now() - i * 24 * 60 * 60 * 1000
+          ).toLocaleDateString(),
+          date: new Date(
+            Date.now() - i * 24 * 60 * 60 * 1000
+          ).toLocaleDateString(),
+          amount: (Number(balance) / 1e18) * price,
+        };
+      })
+      .reverse();
+    console.log(formattedData);
+    setData(formattedData);
+  };
 
   return (
-    <div>
-      <BarChart
-        width={500}
-        height={300}
-        data={dataaa}
-        margin={{
-          top: 5,
-          right: 30,
-          left: 20,
-          bottom: 5,
-        }}
-      >
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Bar
-          dataKey="date"
-          fill="#8884d8"
-          activeBar={<Rectangle fill="pink" stroke="blue" />}
-        />
-      </BarChart>
-    </div>
+    <BarChart
+      width={1500}
+      height={500}
+      data={data}
+      margin={{
+        top: 5,
+        right: 30,
+        left: 20,
+        bottom: 5,
+      }}
+    >
+      <YAxis dataKey="amount" />
+      <XAxis dataKey="name" />
+      <Tooltip />
+      <Legend />
+      <Bar
+        dataKey="amount"
+        fill="#8884d8"
+        activeBar={<Rectangle fill="pink" stroke="blue" />}
+      />
+    </BarChart>
   );
 }
