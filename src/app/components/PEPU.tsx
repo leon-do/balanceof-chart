@@ -70,8 +70,8 @@ export default function PEPU() {
 
   return (
     <div className="h-[500px] w-full">
+      PEPU Balance
       <ResponsiveContainer width="100%" height="100%">
-        <h1>PEPU Balance</h1>
         <BarChart
           data={data}
           margin={{
