@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { createPublicClient, http } from "viem";
 
-export default function PEPU() {
+export default function WPEPU() {
   // https://recharts.org/en-US/examples/SimpleBarChart
   const [data, setData] = useState([] as ChartData[]);
 
@@ -45,8 +45,21 @@ export default function PEPU() {
     // https://viem.sh/docs/clients/transports/http.html
     const balances = await Promise.all(
       blocks.map(async (block) => {
-        const balance = await client.getBalance({
-          address: process.env.NEXT_PUBLIC_EOA_ADDRESS as `0x${string}`,
+        const balance = await client.readContract({
+          address: "0x4200000000000000000000000000000000000006",
+          functionName: "balanceOf",
+          abi: [
+            {
+              inputs: [
+                { internalType: "address", name: "account", type: "address" },
+              ],
+              name: "balanceOf",
+              outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+              stateMutability: "view",
+              type: "function",
+            },
+          ],
+          args: [process.env.NEXT_PUBLIC_EOA_ADDRESS as `0x${string}`],
           blockNumber: BigInt(block),
         });
         return balance;
@@ -69,7 +82,7 @@ export default function PEPU() {
 
   return (
     <div className="h-[500px] w-full my-20">
-      PEPU Balance
+      WPEPU Balance
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
           <YAxis dataKey="amount" />
