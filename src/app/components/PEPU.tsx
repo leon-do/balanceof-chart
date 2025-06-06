@@ -16,7 +16,7 @@ export default function PEPU() {
   const [data, setData] = useState([] as ChartData[]);
 
   const client = createPublicClient({
-    transport: http("https://rpc-pepe-unchained-gupg0lo9wf.t.conduit.xyz"),
+    transport: http(process.env.NEXT_PUBLIC_RPC_URL as string),
   });
 
   useEffect(() => {
@@ -25,9 +25,9 @@ export default function PEPU() {
 
   const getData = async () => {
     // get price of PEPE
-    const res = await fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=pepe-unchained&vs_currencies=usd"
-    ).then((res) => res.json());
+    const res = await fetch(process.env.NEXT_PUBLIC_PRICE_API as string).then(
+      (res) => res.json()
+    );
     const price = res["pepe-unchained"].usd;
 
     // get latest block
