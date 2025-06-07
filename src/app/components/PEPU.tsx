@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { createPublicClient, http } from "viem";
+import getPrice from "../utils/getPrice";
 
 export default function PEPU() {
   // https://recharts.org/en-US/examples/SimpleBarChart
@@ -25,10 +26,7 @@ export default function PEPU() {
 
   const getData = async () => {
     // get price of PEPE
-    const res = await fetch(process.env.NEXT_PUBLIC_PRICE_API as string).then(
-      (res) => res.json()
-    );
-    const price = res["pepe-unchained"].usd;
+    const price = await getPrice();
 
     // get latest block
     const blockNumber = Number(await client.getBlockNumber());
@@ -60,7 +58,7 @@ export default function PEPU() {
         return {
           name: new Date(date).toLocaleDateString(),
           date: date,
-          amount: (Number(balance) / 1e18) * price,
+          amount: (Number(balance) / 1e18) * price || 0.0001,
         };
       })
       .reverse();
